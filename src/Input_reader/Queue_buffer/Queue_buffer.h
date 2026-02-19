@@ -21,5 +21,6 @@ void freeQueue(Queue *q);
 
 void printBuffer(Queue *q);
 
-#endif
+void queue_clear(Queue *q);
 
+#endif

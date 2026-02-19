@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <termios.h>
 
 #define BLOCK_SIZE 512
 
@@ -44,42 +43,6 @@ Queue *createQueue() {
   q->cursor = NULL;
   return q;
 }
-
-// void freeQueue(Queue *arg) {
-//   if (arg->front == NULL && arg->rear == NULL) {
-//     free(arg);
-//   }
-// }
-
-// void enqueue(Queue *q, char c) {
-//   Node *newNode = createNode();
-//   if (q->front == NULL && q->rear == NULL) {
-//     q->front = q->rear = newNode;
-//     q->cursor = newNode;
-//     q->cursor_pos = 0;
-//   } else {
-//     q->rear->next = newNode;
-//     newNode->prev = q->rear;
-//     q->rear = newNode;
-//   }
-// }
-
-// char dequeue(Queue *q) {
-//   if (q->front == NULL && q->rear == NULL) {
-//     puts("Queue underflow!!\n");
-//     exit(1);
-//   }
-//   Node *temp = q->front;
-//   char removed_data = temp->data;
-//   q->front = temp->next;
-//   if (q->front) {
-//     q->front->prev = NULL;
-//   } else {
-//     q->rear = NULL;
-//   }
-//   free(temp);
-//   return removed_data;
-// }
 
 // CURSOR MOVEMENTS
 void move_left(Queue *q) {
@@ -196,4 +159,20 @@ void printBuffer(Queue *q) {
     n = n->next;
   }
   putchar('\n');
+}
+
+void queue_clear(Queue *q) {
+  if (!q)
+    return;
+
+  Node *cur = q->front;
+  while (cur) {
+    Node *next = cur->next;
+    free(cur);
+    cur = next;
+  }
+
+  q->front = NULL;
+  q->rear = NULL;
+  q->cursor = NULL;
 }
