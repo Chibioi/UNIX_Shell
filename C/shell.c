@@ -12,7 +12,7 @@
 void shell_loop(void);
 char *shell_readline(void);
 char **shell_splitline(char *line);
-int shell_execute(char **argument);
+int shell_launch(char **args);
 
 int main(int argc, char **argv) {
   // Load config files, if any.
@@ -34,7 +34,7 @@ void shell_loop(void) {
     printf("> ");
     line = shell_readline();
     arg = shell_splitline(line);
-    status = shell_execute(arg);
+    status = shell_launch(arg);
   } while (status);
 }
 
