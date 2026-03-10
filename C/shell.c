@@ -1,3 +1,4 @@
+#include <dirent.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -13,6 +14,20 @@ void shell_loop(void);
 char *shell_readline(void);
 char **shell_splitline(char *line);
 int shell_launch(char **args);
+int shell_cd(char **args);
+int shell_help(char **args);
+int shell_exit(char **args);
+int num_shell_builtins();
+int shell_execute(char **args);
+int shell_ls(char **args);
+
+char *builtin_commands[] = {"cd", "exit", "help", "ls"};
+int (*builtin_func[])(char **) = {
+    &shell_cd,
+    &shell_exit,
+    &shell_help,
+    &shell_ls,
+};
 
 int main(int argc, char **argv) {
   // Load config files, if any.
@@ -34,7 +49,7 @@ void shell_loop(void) {
     printf("> ");
     line = shell_readline();
     arg = shell_splitline(line);
-    status = shell_launch(arg);
+    status = shell_execute(arg);
   } while (status);
 }
 
@@ -153,7 +168,7 @@ int shell_launch(char **args) {
     pid_t first_process_id = fork();
 
     if (first_process_id == 0) {
-      dup2(pipefd[1], STDOUT_FILENO);
+      dup2(pipefd[1], STDOUT_FILENO); // This command writes to the pipe
       close(pipefd[0]);
       execvp(args[0], args);
       perror("shell");
@@ -162,7 +177,7 @@ int shell_launch(char **args) {
 
     pid_t second_process_id = fork();
     if (second_process_id == 0) {
-      dup2(pipefd[0], STDOUT_FILENO);
+      dup2(pipefd[0], STDIN_FILENO); // This command reads from the pipe
       close(pipefd[1]);
       execvp(args2[0], args2);
       perror("shell");
@@ -177,4 +192,72 @@ int shell_launch(char **args) {
   }
 
   return 1;
+}
+
+int num_shell_builtins() { return sizeof(builtin_commands) / sizeof(char *); };
+
+int shell_cd(char **args) {
+  if (args[1] == NULL) {
+    fprintf(stderr, "shell: expected argument to \"cd\"\n");
+  } else {
+    if (chdir(args[1]) != 0) {
+      perror("shell");
+    }
+  }
+  return 1;
+}
+
+int shell_help(char **args) {
+  int i;
+  printf("Chibioi's Shell\n");
+  printf("Type program names and arguments, and hit enter.\n");
+  printf("The following are built in:\n");
+
+  for (i = 0; i < num_shell_builtins(); i++) {
+    printf("  %s\n", builtin_commands[i]);
+  }
+
+  printf("Use the man command for information on other programs.\n");
+  return 1;
+}
+
+int shell_exit(char **args) { return 0; }
+
+int shell_ls(char **args) {
+  DIR *dir;
+  struct dirent *entry;
+
+  char *path = args[1] ? args[1] : ".";
+
+  dir = opendir(path);
+
+  if (dir == NULL) {
+    perror("ls");
+    return 1;
+  }
+
+  while ((entry = readdir(dir)) != NULL) {
+    printf("%s\n", entry->d_name);
+  }
+
+  closedir(dir);
+  return 1;
+}
+
+int shell_execute(char **args) {
+  int i;
+
+  if (args[0] == NULL) {
+    // An empty command was entered.
+    puts("An Empty command was entered");
+    return 1;
+  }
+
+  for (i = 0; i < num_shell_builtins(); i++) {
+    if (strcmp(args[0], builtin_commands[i]) == 0) {
+      return (*builtin_func[i])(args);
+    }
+  }
+
+  return shell_launch(args);
 }
