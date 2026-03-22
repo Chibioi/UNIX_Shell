@@ -50,6 +50,9 @@ void shell_loop(void) {
     line = shell_readline();
     arg = shell_splitline(line);
     status = shell_execute(arg);
+
+    free(line);
+    free(arg);
   } while (status);
 }
 
