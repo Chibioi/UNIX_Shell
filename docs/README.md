@@ -127,7 +127,3 @@ hello
 - No command history or tab completion
 
 ---
-
-## License
-
-MIT
